@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Dashboard - BridgeCare</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #27ae60;
+            --primary-light: #2ecc71;
+            --primary-dark: #219653;
+            --secondary: #3498db;
+            --secondary-light: #5dade2;
+            --accent: #e74c3c;
+            --accent-light: #ec7063;
+            --warning: #f39c12;
+            --warning-light: #f7dc6f;
+            --dark: #2c3e50;
+            --dark-light: #34495e;
+            --light: #ecf0f1;
+            --lighter: #f8f9fa;
+            --text: #2c3e50;
+            --text-light: #7f8c8d;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --shadow-hover: 0 8px 30px rgba(0,0,0,0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            position: relative;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary-light);
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: var(--primary-light);
+            transition: var(--transition);
+            transform: translateX(-50%);
+        }
+        
+        .nav-links a:hover::after {
+            width: 80%;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        /* Dashboard Styles */
+        .dashboard {
+            padding: 2rem 0;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .welcome-message {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+            transition: var(--transition);
+        }
+        
+        .sidebar:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .profile-section {
+            text-align: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--light);
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow);
+        }
+        
+        .status-active { 
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .status-busy { 
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            border: 2px solid #ffeaa7;
+        }
+        .status-offline { 
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--lighter), white);
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border: 1px solid var(--light);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Emergency Panel */
+        .emergency-panel {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .emergency-panel:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .emergency-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+        
+        .emergency-title h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .emergency-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .emergency-btn {
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .emergency-btn:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .emergency-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        .content-section {
+            background: white;
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            animation: slideInUp 0.5s ease;
+        }
+        
+        .content-section:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .section-title i {
+            color: var(--primary);
+        }
+        
+        /* Alert and Task Items */
+        .alert-item, .task-item, .history-item {
+            padding: 1.2rem;
+            border-left: 4px solid var(--primary);
+            background: var(--lighter);
+            border-radius: var(--radius-sm);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            animation: fadeIn 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert-item::before, .task-item::before, .history-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.02), rgba(52, 152, 219, 0.02));
+            z-index: 0;
+        }
+        
+        .alert-item:hover, .task-item:hover, .history-item:hover {
+            transform: translateX(8px);
+            box-shadow: var(--shadow);
+        }
+        
+        .alert-high { border-left-color: var(--accent); background: #fdf2f2; }
+        .alert-medium { border-left-color: var(--warning); background: #fef9f3; }
+        
+        .alert-header, .task-header, .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .alert-type, .task-type, .history-type {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.1rem;
+        }
+        
+        .alert-urgency, .task-status, .history-status {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .urgency-high { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .urgency-medium { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .urgency-low { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .status-in-progress { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .status-completed { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+        .alert-location, .task-location, .history-location {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .alert-time, .task-time, .history-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Button Styles */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #2980b9, var(--secondary));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #c0392b, var(--accent));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning), var(--warning-light));
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #e67e22, var(--warning));
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Map Styles */
+        .map-container {
+            height: 400px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+        }
+        
+        /* Form Styles */
+        .form-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+        
+        .form-card:hover {
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid var(--light);
+            border-radius: var(--radius-sm);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: var(--transition);
+            background: var(--lighter);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+            background: white;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        
+        /* Message Styles */
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1rem;
+            text-align: center;
+            font-weight: 600;
+            animation: slideInDown 0.5s ease;
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--light);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--text-light);
+            position: relative;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab:hover {
+            color: var(--dark);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Performance Stats */
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .performance-card {
+            background: linear-gradient(135deg, var(--lighter), white);
+            padding: 1.2rem;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            border: 1px solid var(--light);
+            transition: var(--transition);
+        }
+        
+        .performance-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+        
+        .badge-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        
+        .badge:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Profile Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-hover);
+            animation: slideInUp 0.4s ease;
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 50%;
+        }
+        
+        .close-modal:hover {
+            color: var(--accent);
+            background: var(--lighter);
+        }
+        
+        footer {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideInDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid, .performance-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .emergency-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">
+                    <i class="fas fa-hands-helping"></i>
+                    BRIDGECARE
+                </div>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#alerts">Alerts</a></li>
+                    <li><a href="#tasks">Tasks</a></li>
+                    <li><a href="#history">History</a></li>
+                    <li><a href="#map">Map</a></li>
+                </ul>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar" onclick="openProfileModal()">V</div>
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+    
+    <section class="dashboard">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>Volunteer Dashboard</h1>
+                <div class="welcome-message" id="welcomeMessage">Welcome back, Volunteer!</div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- Sidebar with Profile and Stats -->
+                <div class="sidebar">
+                    <div class="profile-section">
+                        <div class="profile-avatar" id="profileAvatar">V</div>
+                        <h3 id="volunteerName">Volunteer Name</h3>
+                        <p id="volunteerId">ID: VOL-001</p>
+                        <p id="volunteerRegion">Region: Downtown</p>
+                        <div class="status-badge status-active" id="statusBadge">Active</div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number" id="tasksCompleted">0</div>
+                            <div class="stat-label">Tasks Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="ongoingTasks">0</div>
+                            <div class="stat-label">Ongoing Tasks</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="peopleHelped">0</div>
+                            <div class="stat-label">People Helped</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="foodDelivered">0</div>
+                            <div class="stat-label">Food Packets</div>
+                        </div>
+                    </div>
+                    
+                    <div class="emergency-panel">
+                        <div class="emergency-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Emergency Services</h3>
+                        </div>
+                        <div class="emergency-buttons">
+                            <div class="emergency-btn" onclick="requestAmbulance()">
+                                <i class="fas fa-ambulance"></i>
+                                <div>Ambulance</div>
+                            </div>
+                            <div class="emergency-btn" onclick="requestPolice()">
+                                <i class="fas fa-shield-alt"></i>
+                                <div>Police</div>
+                            </div>
+                            <div class="emergency-btn" onclick="contactNGO()">
+                                <i class="fas fa-hands-helping"></i>
+                                <div>NGO Helpline</div>
+                            </div>
+                            <div class="emergency-btn" onclick="reportIncident()">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <div>Report Incident</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Area -->
+                <div class="main-content">
+                    <!-- Left Column -->
+                    <div>
+                        <!-- Real-time Alerts Section -->
+                        <div class="content-section" id="alerts">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-bell"></i>
+                                    Real-time Alerts
+                                </h2>
+                                <button class="btn btn-primary btn-small" onclick="refreshAlerts()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="alertsList">
+                                <!-- Alerts will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Task List Section -->
+                        <div class="content-section" id="tasks">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-tasks"></i>
+                                    My Tasks
+                                </h2>
+                                <div class="tabs">
+                                    <div class="tab active" data-tab="active-tasks">Active</div>
+                                    <div class="tab" data-tab="pending-tasks">Pending</div>
+                                    <div class="tab" data-tab="completed-tasks">Completed</div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-content active" id="active-tasks">
+                                <div id="activeTasksList">
+                                    <!-- Active tasks will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="tab-content" id="pending-tasks">
+                                <div id="pendingTasksList">
+                                    <!-- Pending tasks will be populated by JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <div class="tab-content" id="completed-tasks">
+                                <div id="completedTasksList">
+                                    <!-- Completed tasks will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- History Section -->
+                        <div class="content-section" id="history">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-history"></i>
+                                    Homeless Registration History
+                                </h2>
+                                <button class="btn btn-secondary btn-small" onclick="refreshHistory()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="historyList">
+                                <!-- History will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div>
+                        <!-- Map Section -->
+                        <div class="content-section" id="map">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-map-marked-alt"></i>
+                                    Live Map View
+                                </h2>
+                                <button class="btn btn-secondary btn-small" onclick="refreshMap()">
+                                    <i class="fas fa-sync-alt"></i> Refresh
+                                </button>
+                            </div>
+                            <div class="map-container" id="mapContainer">
+                                <!-- Map will be initialized by JavaScript -->
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="getCurrentLocation()">
+                                    <i class="fas fa-location-arrow"></i> My Location
+                                </button>
+                                <button class="btn btn-secondary" onclick="showHotspots()">
+                                    <i class="fas fa-fire"></i> Show Hotspots
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Register Homeless Person -->
+                        <div class="form-card">
+                            <h2 class="section-title">
+                                <i class="fas fa-user-plus"></i>
+                                Register Homeless Person
+                            </h2>
+                            <div id="message"></div>
+                            
+                            <form id="volunteerForm">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="name">Person's Name</label>
+                                        <input type="text" id="name" name="name" placeholder="Full name if known">
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="age">Age (Approx.)</label>
+                                        <input type="number" id="age" name="age" placeholder="Approximate age" min="0" max="120">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="gender">Gender</label>
+                                    <select id="gender" name="gender">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                        <option value="Unknown">Prefer not to say</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="location">Location Found</label>
+                                    <input type="text" id="location" name="location" placeholder="Current location" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="condition">Physical Condition</label>
+                                    <select id="condition" name="condition">
+                                        <option value="Healthy">Healthy</option>
+                                        <option value="Weak">Weak</option>
+                                        <option value="Injured">Injured</option>
+                                        <option value="Sick">Sick</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="immediate_needs">Immediate Needs</label>
+                                    <div class="checkbox-group">
+                                        <label><input type="checkbox" name="needs" value="food"> Food</label>
+                                        <label><input type="checkbox" name="needs" value="shelter"> Shelter</label>
+                                        <label><input type="checkbox" name="needs" value="medical"> Medical</label>
+                                        <label><input type="checkbox" name="needs" value="clothing"> Clothing</label>
+                                        <label><input type="checkbox" name="needs" value="other"> Other</label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="health_status">Health Status & Notes</label>
+                                    <textarea id="health_status" name="health_status" placeholder="Describe their health condition, any visible injuries, special needs..."></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="photo">Photo (Optional)</label>
+                                    <input type="file" id="photo" name="photo" accept="image/*">
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-save"></i> Register Person
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Performance & Reports -->
+                        <div class="content-section">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    Performance & Reports
+                                </h2>
+                            </div>
+                            
+                            <div class="performance-stats">
+                                <div class="performance-card">
+                                    <div class="stat-number" id="totalHelped">0</div>
+                                    <div class="stat-label">Total Helped</div>
+                                </div>
+                                <div class="performance-card">
+                                    <div class="stat-number" id="foodPackets">0</div>
+                                    <div class="stat-label">Food Packets</div>
+                                </div>
+                                <div class="performance-card">
+                                    <div class="stat-number" id="emergencyCases">0</div>
+                                    <div class="stat-label">Emergency Cases</div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 style="margin-bottom: 1rem;">Badges Earned</h4>
+                                <div class="badge-container" id="badgesEarned">
+                                    <!-- Badges will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Profile Modal -->
+    <div class="modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Profile</h3>
+                <button class="close-modal" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="profileName">Full Name</label>
+                    <input type="text" id="profileName" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileEmail">Email</label>
+                    <input type="email" id="profileEmail" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="profilePhone">Phone</label>
+                    <input type="tel" id="profilePhone" name="phone">
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileRegion">Assigned Region</label>
+                    <input type="text" id="profileRegion" name="assigned_region">
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileStatus">Status</label>
+                    <select id="profileStatus" name="status">
+                        <option value="active">Active</option>
+                        <option value="busy">Busy</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileSkills">Skills & Expertise</label>
+                    <textarea id="profileSkills" name="skills" placeholder="List your skills and areas of expertise..."></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-save"></i> Update Profile
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 BridgeCare Volunteer System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Global variables
+        let map;
+        let volunteerData = {};
+        let alerts = [];
+        let tasks = [];
+        let homelessHistory = [];
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            initializeMap();
+            loadAlerts();
+            loadTasks();
+            loadHistory();
+            setupEventListeners();
+        });
+
+        // Initialize dashboard data
+        async function initializeDashboard() {
+            try {
+                // Load volunteer profile
+                const profileResponse = await fetch('/api/volunteer/profile');
+                if (profileResponse.ok) {
+                    volunteerData = await profileResponse.json();
+                    updateProfileUI();
+                    populateProfileForm();
+                }
+
+                // Load volunteer stats
+                const statsResponse = await fetch('/api/volunteer/stats');
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    updateStatsUI(stats);
+                }
+
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+                // Use sample data as fallback
+                loadSampleData();
+            }
+        }
+
+        // Update profile UI with volunteer data
+        function updateProfileUI() {
+            document.getElementById('volunteerName').textContent = volunteerData.name || 'Volunteer Name';
+            document.getElementById('volunteerId').textContent = `ID: ${volunteerData.volunteer_id || 'VOL-001'}`;
+            document.getElementById('volunteerRegion').textContent = `Region: ${volunteerData.assigned_region || 'Downtown'}`;
+            document.getElementById('userAvatar').textContent = volunteerData.name ? volunteerData.name.charAt(0) : 'V';
+            document.getElementById('profileAvatar').textContent = volunteerData.name ? volunteerData.name.charAt(0) : 'V';
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${volunteerData.name || 'Volunteer'}!`;
+            
+            // Update status
+            const statusBadge = document.getElementById('statusBadge');
+            statusBadge.className = `status-badge status-${volunteerData.status || 'active'}`;
+            statusBadge.textContent = volunteerData.status ? volunteerData.status.charAt(0).toUpperCase() + volunteerData.status.slice(1) : 'Active';
+            
+            // Update badges
+            updateBadgesUI(volunteerData.badges || []);
+        }
+
+        // Populate profile form with current data
+        function populateProfileForm() {
+            document.getElementById('profileName').value = volunteerData.name || '';
+            document.getElementById('profileEmail').value = volunteerData.email || '';
+            document.getElementById('profilePhone').value = volunteerData.phone || '';
+            document.getElementById('profileRegion').value = volunteerData.assigned_region || '';
+            document.getElementById('profileStatus').value = volunteerData.status || 'active';
+            document.getElementById('profileSkills').value = volunteerData.skills || '';
+        }
+
+        // Update statistics UI
+        function updateStatsUI(stats) {
+            document.getElementById('tasksCompleted').textContent = stats.tasks_completed || 0;
+            document.getElementById('ongoingTasks').textContent = stats.ongoing_tasks || 0;
+            document.getElementById('peopleHelped').textContent = stats.people_helped || 0;
+            document.getElementById('foodDelivered').textContent = stats.food_delivered || 0;
+            document.getElementById('totalHelped').textContent = stats.people_helped || 0;
+            document.getElementById('foodPackets').textContent = stats.food_delivered || 0;
+            document.getElementById('emergencyCases').textContent = stats.emergency_cases || 0;
+        }
+
+        // Update badges UI
+        function updateBadgesUI(badges) {
+            const badgesContainer = document.getElementById('badgesEarned');
+            
+            if (badges.length === 0) {
+                badgesContainer.innerHTML = '<span class="badge">New Volunteer</span>';
+                return;
+            }
+            
+            badgesContainer.innerHTML = badges.map(badge => 
+                `<span class="badge">${badge}</span>`
+            ).join('');
+        }
+
+        // Initialize the map
+        function initializeMap() {
+            map = L.map('mapContainer').setView([40.7128, -74.0060], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Try to set map to user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        map.setView([lat, lng], 14);
+
+                        // Add marker for current location
+                        L.marker([lat, lng]).addTo(map).bindPopup('<b>Your Location</b>').openPopup();
+
+                        // Populate location input with lat,lng for convenience
+                        const locInput = document.getElementById('location');
+                        if (locInput) locInput.value = lat.toFixed(6) + ',' + lng.toFixed(6);
+                    },
+                    error => {
+                        addSampleMapMarkers();
+                    }
+                );
+            } else {
+                addSampleMapMarkers();
+            }
+        }
+
+        // Add sample markers to the map
+        function addSampleMapMarkers() {
+            // Homeless individuals
+            L.marker([40.7128, -74.0060])
+                .addTo(map)
+                .bindPopup('<b>Homeless Individual</b><br>John Doe - Needs food and shelter')
+                .openPopup();
+            
+            // Food pickup point
+            L.marker([40.7210, -74.0005])
+                .addTo(map)
+                .bindPopup('<b>Food Pickup</b><br>Community Kitchen - 50 meals available');
+            
+            // Shelter
+            L.marker([40.7050, -74.0090])
+                .addTo(map)
+                .bindPopup('<b>Shelter</b><br>Hope Shelter - 5 beds available');
+            
+            // Hotspot area
+            L.circle([40.7180, -74.0030], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.2,
+                radius: 500
+            }).addTo(map).bindPopup('<b>High Need Area</b><br>Multiple assistance requests');
+        }
+
+        // Load real-time alerts
+        async function loadAlerts() {
+            try {
+                const response = await fetch('/api/volunteer/alerts');
+                if (response.ok) {
+                    alerts = await response.json();
+                } else {
+                    alerts = getSampleAlerts();
+                }
+                displayAlerts();
+            } catch (error) {
+                console.error('Error loading alerts:', error);
+                alerts = getSampleAlerts();
+                displayAlerts();
+            }
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            try {
+                const response = await fetch('/api/volunteer/tasks');
+                if (response.ok) {
+                    tasks = await response.json();
+                } else {
+                    tasks = getSampleTasks();
+                }
+                displayTasks();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                tasks = getSampleTasks();
+                displayTasks();
+            }
+        }
+
+        // Load homeless registration history
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/volunteer/history');
+                if (response.ok) {
+                    homelessHistory = await response.json();
+                } else {
+                    homelessHistory = getSampleHistory();
+                }
+                displayHistory();
+            } catch (error) {
+                console.error('Error loading history:', error);
+                homelessHistory = getSampleHistory();
+                displayHistory();
+            }
+        }
+
+        // Display alerts in the UI
+        function displayAlerts() {
+            const alertsList = document.getElementById('alertsList');
+            
+            if (alerts.length === 0) {
+                alertsList.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">No active alerts at this time.</p>';
+                return;
+            }
+            
+            alertsList.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.urgency === 'high' ? 'alert-high' : alert.urgency === 'medium' ? 'alert-medium' : ''}">
+                    <div class="alert-header">
+                        <span class="alert-type">${alert.type}</span>
+                        <span class="alert-urgency urgency-${alert.urgency}">${alert.urgency.toUpperCase()}</span>
+                    </div>
+                    <div class="alert-location">
+                        <i class="fas fa-map-marker-alt"></i> ${alert.location}
+                    </div>
+                    <p>${alert.description}</p>
+                    <div class="alert-time">
+                        <i class="far fa-clock"></i> ${new Date(alert.timestamp).toLocaleString()}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-small" onclick="acceptTask('${alert.id}')">
+                            <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button class="btn btn-danger btn-small" onclick="rejectTask('${alert.id}')">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display tasks in the UI
+        function displayTasks() {
+            const activeTasks = tasks.filter(task => task.status === 'in-progress');
+            const pendingTasks = tasks.filter(task => task.status === 'pending');
+            const completedTasks = tasks.filter(task => task.status === 'completed');
+            
+            displayTaskList('activeTasksList', activeTasks);
+            displayTaskList('pendingTasksList', pendingTasks);
+            displayTaskList('completedTasksList', completedTasks);
+        }
+
+        // Display a specific task list
+        function displayTaskList(containerId, taskList) {
+            const container = document.getElementById(containerId);
+            
+            if (taskList.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">No tasks found.</p>';
+                return;
+            }
+            
+            container.innerHTML = taskList.map(task => `
+                <div class="task-item">
+                    <div class="task-header">
+                        <span class="task-type">${task.type}</span>
+                        <span class="task-status status-${task.status}">${task.status.replace('-', ' ').toUpperCase()}</span>
+                    </div>
+                    <div class="task-location">
+                        <i class="fas fa-map-marker-alt"></i> ${task.location}
+                    </div>
+                    <p>${task.description}</p>
+                    <div class="task-time">
+                        <i class="far fa-clock"></i> ${new Date(task.assigned_at).toLocaleString()}
+                    </div>
+                    ${task.status === 'in-progress' ? `
+                    <div class="action-buttons">
+                        <button class="btn btn-primary btn-small" onclick="completeTask('${task.id}')">
+                            <i class="fas fa-check"></i> Complete
+                        </button>
+                        <button class="btn btn-warning btn-small" onclick="escalateTask('${task.id}')">
+                            <i class="fas fa-exclamation-triangle"></i> Escalate
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Display history in the UI
+        function displayHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (homelessHistory.length === 0) {
+                historyList.innerHTML = '<p style="text-align: center; padding: 20px; color: var(--text-light);">No registration history yet.</p>';
+                return;
+            }
+            
+            historyList.innerHTML = homelessHistory.map(record => `
+                <div class="history-item">
+                    <div class="history-header">
+                        <span class="history-type">${record.name || 'Unknown Individual'}</span>
+                        <span class="history-status status-${record.status || 'active'}">${(record.status || 'active').toUpperCase()}</span>
+                    </div>
+                    <div class="history-location">
+                        <i class="fas fa-map-marker-alt"></i> ${record.location_found}
+                    </div>
+                    <p><strong>Condition:</strong> ${record.physical_condition || 'Not specified'}</p>
+                    <p><strong>Needs:</strong> ${Array.isArray(record.immediate_needs) ? record.immediate_needs.join(', ') : 'None specified'}</p>
+                    <div class="history-time">
+                        <i class="far fa-clock"></i> ${new Date(record.created_at).toLocaleString()}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+                });
+            });
+            
+            // Form submission
+            document.getElementById('volunteerForm').addEventListener('submit', handleFormSubmit);
+            document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+        }
+
+        // Handle form submission for registering homeless individuals
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const formElements = e.target.elements;
+            
+            // Collect needs as array
+            const needs = [];
+            document.querySelectorAll('input[name="needs"]:checked').forEach(checkbox => {
+                needs.push(checkbox.value);
+            });
+            
+            // Build JSON payload (backend expects JSON, not form-data)
+            const payload = {
+                name: formElements.name.value,
+                age: parseInt(formElements.age.value) || null,
+                gender: formElements.gender.value,
+                location: formElements.location.value,
+                health_status: formElements.health_status.value,
+                needs: needs,
+                notes: formElements.health_status.value
+            };
+            
+            try {
+                const fetchUrl = window.location.origin + '/api/volunteer/register_homeless';
+                const response = await fetch(fetchUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await response.json();
+                const messageDiv = document.getElementById('message');
+                
+                if (response.ok && result.success) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = result.message || 'Person registered successfully!';
+                    document.getElementById('volunteerForm').reset();
+                    
+                    // Refresh stats and history
+                    initializeDashboard();
+                    loadHistory();
+                    
+                    setTimeout(() => {
+                        messageDiv.textContent = '';
+                    }, 5000);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = result.message || result.error || 'Failed to register person';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('message');
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'An error occurred while registering the person';
+            }
+        }
+
+        // Handle profile update
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const profileData = Object.fromEntries(formData);
+            
+            try {
+                const response = await fetch('/api/volunteer/update_profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(profileData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // Update local data and UI
+                    volunteerData = { ...volunteerData, ...profileData };
+                    updateProfileUI();
+                    closeProfileModal();
+                    
+                    // Show success message
+                    showToast('Profile updated successfully!', 'success');
+                } else {
+                    showToast(result.message || 'Failed to update profile', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                showToast('An error occurred while updating profile', 'error');
+            }
+        }
+
+        // Task management functions
+        async function acceptTask(taskId) {
+            try {
+                const response = await fetch(`/api/volunteer/tasks/${taskId}/accept`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    // Refresh tasks and alerts
+                    loadAlerts();
+                    loadTasks();
+                    initializeDashboard(); // Refresh stats
+                    showToast('Task accepted successfully!', 'success');
+                }
+            } catch (error) {
+                console.error('Error accepting task:', error);
+                showToast('Failed to accept task', 'error');
+            }
+        }
+
+        async function rejectTask(taskId) {
+            try {
+                const response = await fetch(`/api/volunteer/tasks/${taskId}/reject`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    loadAlerts();
+                    showToast('Task rejected', 'info');
+                }
+            } catch (error) {
+                console.error('Error rejecting task:', error);
+                showToast('Failed to reject task', 'error');
+            }
+        }
+
+        async function completeTask(taskId) {
+            try {
+                const response = await fetch(`/api/volunteer/tasks/${taskId}/complete`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                    initializeDashboard(); // Refresh stats
+                    showToast('Task completed successfully!', 'success');
+                }
+            } catch (error) {
+                console.error('Error completing task:', error);
+                showToast('Failed to complete task', 'error');
+            }
+        }
+
+        async function escalateTask(taskId) {
+            try {
+                const response = await fetch(`/api/volunteer/tasks/${taskId}/escalate`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    loadTasks();
+                    showToast('Task escalated to supervisor', 'info');
+                }
+            } catch (error) {
+                console.error('Error escalating task:', error);
+                showToast('Failed to escalate task', 'error');
+            }
+        }
+
+        // Emergency functions
+        function requestAmbulance() {
+            if (confirm('Are you sure you want to request an ambulance?')) {
+                alert('Ambulance requested! Your location has been shared with emergency services.');
+            }
+        }
+
+        function requestPolice() {
+            if (confirm('Are you sure you want to request police assistance?')) {
+                alert('Police assistance requested! Your location has been shared.');
+            }
+        }
+
+        function contactNGO() {
+            alert('Connecting to NGO helpline...');
+        }
+
+        function reportIncident() {
+            const incidentDetails = prompt('Please describe the incident:');
+            if (incidentDetails) {
+                alert('Incident reported. NGO coordinators have been notified.');
+            }
+        }
+
+        // Profile modal functions
+        function openProfileModal() {
+            document.getElementById('profileModal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').style.display = 'none';
+        }
+
+        // Utility functions
+        function refreshAlerts() {
+            loadAlerts();
+            showToast('Alerts refreshed', 'info');
+        }
+
+        function refreshHistory() {
+            loadHistory();
+            showToast('History refreshed', 'info');
+        }
+
+        function refreshMap() {
+            showToast('Map refreshed with latest data', 'info');
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        map.setView([lat, lng], 15);
+                        
+                        // Add marker for current location
+                        L.marker([lat, lng])
+                            .addTo(map)
+                            .bindPopup('<b>Your Location</b>')
+                            .openPopup();
+
+                        // Populate location input
+                        const locInput = document.getElementById('location');
+                        if (locInput) locInput.value = lat.toFixed(6) + ',' + lng.toFixed(6);
+                        
+                        showToast('Location updated', 'success');
+                    },
+                    error => {
+                        showToast('Unable to get your location: ' + error.message, 'error');
+                    }
+                );
+            } else {
+                showToast('Geolocation is not supported by this browser.', 'error');
+            }
+        }
+
+        function showHotspots() {
+            showToast('Showing areas with high assistance needs', 'info');
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `message ${type}`;
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '3000';
+            toast.style.maxWidth = '300px';
+            toast.style.animation = 'slideInDown 0.5s ease';
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.5s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
+
+        // Sample data functions (for demo purposes)
+        function loadSampleData() {
+            volunteerData = {
+                name: "Sarah Johnson",
+                volunteer_id: "VOL-001",
+                assigned_region: "Downtown District",
+                status: "active",
+                email: "sarah.j@example.com",
+                phone: "+1 (555) 123-4567",
+                skills: "First Aid, Crisis Management, Community Outreach",
+                badges: ["First Aid", "Food Hero", "Night Helper", "Community Champion"]
+            };
+            
+            updateProfileUI();
+            
+            const sampleStats = {
+                tasks_completed: 24,
+                ongoing_tasks: 3,
+                people_helped: 42,
+                food_delivered: 67,
+                emergency_cases: 5
+            };
+            
+            updateStatsUI(sampleStats);
+        }
+
+        function getSampleAlerts() {
+            return [
+                {
+                    id: 'alert-1',
+                    type: 'Food Distribution',
+                    urgency: 'medium',
+                    location: '123 Main Street',
+                    description: 'Hotel has 20 excess meals available for pickup',
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'alert-2',
+                    type: 'Medical Assistance',
+                    urgency: 'high',
+                    location: 'Central Park - West Side',
+                    description: 'Elderly individual needs immediate medical attention',
+                    timestamp: new Date(Date.now() - 15 * 60000).toISOString()
+                }
+            ];
+        }
+
+        function getSampleTasks() {
+            return [
+                {
+                    id: 'task-1',
+                    type: 'Food Delivery',
+                    status: 'in-progress',
+                    location: 'Community Kitchen to Riverside Park',
+                    description: 'Deliver 15 food packets to individuals at Riverside Park',
+                    assigned_at: new Date(Date.now() - 2 * 3600000).toISOString()
+                },
+                {
+                    id: 'task-2',
+                    type: 'Homeless Registration',
+                    status: 'pending',
+                    location: 'Downtown Area',
+                    description: 'Register new homeless individuals in the downtown area',
+                    assigned_at: new Date(Date.now() - 1 * 3600000).toISOString()
+                }
+            ];
+        }
+
+        function getSampleHistory() {
+            return [
+                {
+                    id: 'homeless-1',
+                    name: 'John Doe',
+                    location_found: 'Central Park',
+                    physical_condition: 'Weak',
+                    immediate_needs: ['food', 'shelter'],
+                    created_at: new Date(Date.now() - 2 * 24 * 3600000).toISOString(),
+                    status: 'active'
+                },
+                {
+                    id: 'homeless-2',
+                    name: 'Maria Garcia',
+                    location_found: '123 Main Street',
+                    physical_condition: 'Healthy',
+                    immediate_needs: ['clothing'],
+                    created_at: new Date(Date.now() - 5 * 24 * 3600000).toISOString(),
+                    status: 'sheltered'
+                }
+            ];
+        }
+    </script>
+</body>
+</html>
