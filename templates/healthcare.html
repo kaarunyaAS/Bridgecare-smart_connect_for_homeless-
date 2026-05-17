@@ -1,0 +1,2621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BridgeCare - Healthcare Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* CSS Styles */
+        :root {
+            --primary-blue: #1a73e8;
+            --primary-dark: #0d47a1;
+            --primary-light: #64b5f6;
+            --secondary-blue: #4285f4;
+            --accent-blue: #bbdefb;
+            --light-blue: #e8f0fe;
+            --text-dark: #202124;
+            --text-light: #5f6368;
+            --bg-light: #f8f9fa;
+            --white: #ffffff;
+            --gray: #dadce0;
+            --gray-dark: #3c4043;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --danger: #ea4335;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            --shadow-hover: 0 14px 28px rgba(0, 0, 0, 0.12), 0 10px 10px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s ease;
+            --border-radius: 8px;
+            --sidebar-width: 260px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-dark) 0%, var(--primary-blue) 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+            z-index: 10;
+        }
+
+        .logo-container {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 28px;
+            color: var(--accent-blue);
+        }
+
+        .logo h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .logo span {
+            display: block;
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 20px 0;
+        }
+
+        .sidebar-nav ul {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            padding: 14px 24px;
+            margin: 4px 12px;
+            border-radius: var(--border-radius);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .sidebar-nav li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav li.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            font-weight: 500;
+        }
+
+        .sidebar-nav li i {
+            width: 20px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .badge {
+            background-color: var(--danger);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .user-profile {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--accent-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--primary-dark);
+        }
+
+        .user-info h4 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--white);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 5;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .header-left p {
+            color: var(--text-light);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification {
+            position: relative;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-light);
+        }
+
+        .notification-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .date-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .date-display i {
+            font-size: 18px;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background-color: var(--light-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: var(--primary-blue);
+        }
+
+        .stat-info h3 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        /* Dashboard Sections */
+        .dashboard-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h3 i {
+            color: var(--primary-blue);
+        }
+
+        .btn-view-all {
+            background: none;
+            border: none;
+            color: var(--primary-blue);
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .btn-view-all:hover {
+            color: var(--primary-dark);
+        }
+
+        .section-content {
+            padding: 24px;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        thead {
+            background-color: var(--light-blue);
+        }
+
+        th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 14px;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray);
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: var(--transition);
+        }
+
+        tbody tr:hover {
+            background-color: var(--light-blue);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-scheduled {
+            background-color: #e8f0fe;
+            color: var(--primary-blue);
+        }
+
+        .status-completed {
+            background-color: #e6f4ea;
+            color: var(--success);
+        }
+
+        .status-cancelled {
+            background-color: #fce8e6;
+            color: var(--danger);
+        }
+
+        .status-no-show {
+            background-color: #fef7e0;
+            color: var(--warning);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .action-btn.view {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .action-btn.edit {
+            background-color: #fef7e0;
+            color: var(--warning);
+        }
+
+        .action-btn.delete {
+            background-color: #fce8e6;
+            color: var(--danger);
+        }
+
+        .action-btn.prescribe {
+            background-color: #28a745;
+            color: white;
+            border-radius: 4px;
+            width: auto;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .action-btn.prescribe:hover {
+            background-color: #218838;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Tab Header */
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .tab-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-header h2 i {
+            color: var(--primary-blue);
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--text-dark);
+            border: 1px solid var(--gray);
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--light-blue);
+            border-color: var(--primary-light);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-group label {
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--white);
+        }
+
+        /* Search Box */
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            color: var(--text-light);
+        }
+
+        .search-box input {
+            padding: 10px 12px 10px 40px;
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+            width: 300px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Providers Grid */
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .provider-card {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-blue);
+            transition: var(--transition);
+        }
+
+        .provider-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .provider-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .provider-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .provider-info div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .provider-info i {
+            width: 16px;
+            color: var(--primary-blue);
+        }
+
+        .provider-services {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .service-tag {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Reports Container */
+        .reports-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .reports-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .report-section {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .report-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .report-section h3 i {
+            color: var(--primary-blue);
+        }
+
+        .report-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Settings */
+        .settings-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+        }
+
+        .settings-section {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--bg-light);
+            border-radius: var(--border-radius);
+        }
+
+        /* Switch Toggle */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-blue);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            transition: var(--transition);
+        }
+
+        .close-modal:hover {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        /* Form Styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray);
+            border-radius: var(--border-radius);
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px var(--light-blue);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--success);
+            color: white;
+            padding: 16px 24px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            animation: toastSlideIn 0.3s ease;
+        }
+
+        .toast.active {
+            display: flex;
+        }
+
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast-content i {
+            font-size: 20px;
+        }
+
+        .toast-message {
+            font-weight: 500;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: var(--gray);
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-container">
+                <div class="logo">
+                    <i class="fas fa-heartbeat"></i>
+                    <h2>BridgeCare<span>Health</span></h2>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li data-tab="appointments">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Appointments</span>
+                        <span class="badge" id="pending-count">0</span>
+                    </li>
+                    <li data-tab="patients">
+                        <i class="fas fa-user-injured"></i>
+                        <span>Patients</span>
+                    </li>
+                    <li data-tab="history">
+                        <i class="fas fa-history"></i>
+                        <span>Treatment History</span>
+                    </li>
+                    <li data-tab="reports">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Reports</span>
+                    </li>
+                    <li data-tab="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="avatar">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="user-info">
+                    <h4>Healthcare Admin</h4>
+                    <p>admin@bridgecare.health</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h1 id="page-title">Healthcare Dashboard</h1>
+                    <p id="page-subtitle">Manage appointments, patients, and healthcare services</p>
+                </div>
+                <div class="header-right">
+                    <div class="notification">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-count">3</span>
+                    </div>
+                    <div class="date-display">
+                        <i class="far fa-calendar-alt"></i>
+                        <span id="current-date"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="content-area">
+                <!-- Dashboard Tab -->
+                <div class="tab-content active" id="dashboard-tab">
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="today-appointments">0</h3>
+                                <p>Today's Appointments</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-injured"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="total-patients">0</h3>
+                                <p>Total Patients</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="active-providers">0</h3>
+                                <p>Active Providers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="completed-treatments">0</h3>
+                                <p>Completed Treatments</p>
+                            </div>
+                        </div>
+                    </div>
+
+                            <!-- Modal for Prescription -->
+                            <div class="modal" id="prescription-modal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3>Prescribe Treatment</h3>
+                                        <button class="close-modal">&times;</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="prescription-form">
+                                            <input type="hidden" id="prescription-appointment-id">
+                                            <div class="form-group">
+                                                <label for="diagnosis">Diagnosis</label>
+                                                <textarea id="diagnosis" rows="2"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="prescription-text">Prescription <span style="color: red;">*</span></label>
+                                                <textarea id="prescription-text" rows="3" required placeholder="Enter prescription details for the patient..."></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="prescription-ngo">Send to NGO</label>
+                                                <select id="prescription-ngo">
+                                                    <option value="">Select NGO (optional)</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-actions">
+                                                <button type="button" class="btn-secondary close-modal">Cancel</button>
+                                                <button type="submit" class="btn-primary">Send Prescription</button>
+                                                <button type="button" id="print-prescription" class="btn-secondary">Print</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <div class="dashboard-sections">
+                        <div class="section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-calendar-alt"></i> Upcoming Appointments</h3>
+                                <button class="btn-view-all" data-tab="appointments">View All</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="table-container">
+                                    <table id="upcoming-appointments">
+                                        <thead>
+                                            <tr>
+                                                    <th>Patient</th>
+                                                    <th>Time</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic content will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-prescription-bottle-alt"></i> Recent Prescriptions</h3>
+                                <button class="btn-view-all" data-tab="history">View All</button>
+                            </div>
+                            <div class="section-content">
+                                <div class="table-container">
+                                    <table id="recent-prescriptions">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Date</th>
+                                                <th>Prescription</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Dynamic content will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-chart-line"></i> Monthly Overview</h3>
+                                <select id="month-select">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            <div class="section-content">
+                                <canvas id="monthlyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointments Tab -->
+                <div class="tab-content" id="appointments-tab">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-calendar-check"></i> Appointment Management</h2>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="btn-primary" id="add-appointment-btn">
+                                <i class="fas fa-plus"></i> New Appointment
+                            </button>
+                            <button class="btn-secondary" id="load-sample-data">
+                                <i class="fas fa-database"></i> Load Sample Appointments
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="all">All Status</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="no_show">No Show</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-date">Date:</label>
+                            <input type="date" id="filter-date">
+                        </div>
+                        <div class="filter-group">
+                            <button class="btn-secondary" id="clear-filters">Clear Filters</button>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="appointments-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Patient</th>
+                                    <th>Date & Time</th>
+                                    <th>Booked By</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Patients Tab -->
+                <div class="tab-content" id="patients-tab">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-user-injured"></i> Patient Management</h2>
+                        <button class="btn-primary" id="add-patient-btn">
+                            <i class="fas fa-plus"></i> Add Patient
+                        </button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="patients-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Gender</th>
+                                    <th>Homeless ID</th>
+                                    <th>Associated NGO</th>
+                                    <th>Last Visit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Treatment History Tab -->
+                <div class="tab-content" id="history-tab">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-history"></i> Treatment History</h2>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="history-search" placeholder="Search patient name or ID...">
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Treatment Date</th>
+                                    <th>Diagnosis</th>
+                                    <th>Prescription</th>
+                                    <th>Doctor</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dynamic content will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                
+
+                <!-- Reports Tab -->
+                <div class="tab-content" id="reports-tab">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-chart-bar"></i> Healthcare Reports</h2>
+                        <div class="report-actions">
+                            <button class="btn-secondary" id="generate-report">
+                                <i class="fas fa-download"></i> Generate Report
+                            </button>
+                            <select id="report-period">
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="reports-container">
+                        <div class="report-section">
+                            <h3><i class="fas fa-chart-pie"></i> Appointment Statistics</h3>
+                            <canvas id="appointmentChart"></canvas>
+                        </div>
+                        
+                        <div class="report-section">
+                            <h3><i class="fas fa-procedures"></i> Common Treatments</h3>
+                            <div id="common-treatments">
+                                <!-- Dynamic content will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div class="tab-content" id="settings-tab">
+                    <div class="tab-header">
+                        <h2><i class="fas fa-cog"></i> Settings</h2>
+                    </div>
+                    
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3><i class="fas fa-bell"></i> Notifications</h3>
+                            <div class="setting-item">
+                                <label class="switch">
+                                    <input type="checkbox" id="email-notifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                                <span>Email notifications for new appointments</span>
+                            </div>
+                            <div class="setting-item">
+                                <label class="switch">
+                                    <input type="checkbox" id="sms-notifications">
+                                    <span class="slider"></span>
+                                </label>
+                                <span>SMS alerts for urgent cases</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Appointment Details -->
+    <div class="modal" id="appointment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Appointment Details</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="appointment-form">
+                    <input type="hidden" id="appointment-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patient-select">Patient *</label>
+                            <select id="patient-select" required>
+                                <option value="">Select Patient</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-ngo-select">NGO (Optional)</label>
+                            <select id="appointment-ngo-select">
+                                <option value="">Select NGO</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment-date">Date *</label>
+                            <input type="date" id="appointment-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="appointment-time">Time *</label>
+                            <input type="time" id="appointment-time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="symptoms">Symptoms / Reason</label>
+                        <textarea id="symptoms" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="booked-by">Booked By (NGO/Volunteer)</label>
+                        <input type="text" id="booked-by" placeholder="Enter name of NGO or volunteer">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Appointment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Patient Details -->
+    <div class="modal" id="patient-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Patient Information</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="patient-form">
+                    <input type="hidden" id="patient-id">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patient-name">Full Name *</label>
+                            <input type="text" id="patient-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="patient-age">Age</label>
+                            <input type="number" id="patient-age" min="0" max="120">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patient-gender">Gender</label>
+                            <select id="patient-gender">
+                                <option value="">Select</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="homeless-id">Homeless ID</label>
+                            <input type="text" id="homeless-id">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-contact">Contact Number</label>
+                        <input type="tel" id="patient-contact">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patient-notes">Medical Notes</label>
+                        <textarea id="patient-notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary close-modal">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Patient</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span class="toast-message">Operation completed successfully!</span>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript Code
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize date display
+            const currentDateElement = document.getElementById('current-date');
+            const today = new Date();
+            currentDateElement.textContent = today.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Tab Navigation
+            const tabLinks = document.querySelectorAll('.sidebar-nav li');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update active content
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // Update page title
+                    const pageTitle = document.getElementById('page-title');
+                    const pageSubtitle = document.getElementById('page-subtitle');
+                    
+                    switch(tabId) {
+                        case 'dashboard':
+                            pageTitle.textContent = 'Healthcare Dashboard';
+                            pageSubtitle.textContent = 'Manage appointments, patients, and healthcare services';
+                            loadDashboardData();
+                            break;
+                        case 'appointments':
+                            pageTitle.textContent = 'Appointment Management';
+                            pageSubtitle.textContent = 'View and manage all healthcare appointments';
+                            loadAppointments();
+                            break;
+                        case 'patients':
+                            pageTitle.textContent = 'Patient Management';
+                            pageSubtitle.textContent = 'Manage homeless patient records and information';
+                            loadPatients();
+                            break;
+                        case 'history':
+                            pageTitle.textContent = 'Treatment History';
+                            pageSubtitle.textContent = 'View patient treatment history and records';
+                            loadTreatmentHistory();
+                            break;
+                        
+                        case 'reports':
+                            pageTitle.textContent = 'Healthcare Reports';
+                            pageSubtitle.textContent = 'Analytics and reports on healthcare services';
+                            loadReports();
+                            break;
+                        case 'settings':
+                            pageTitle.textContent = 'Settings';
+                            pageSubtitle.textContent = 'Configure system settings and preferences';
+                            break;
+                    }
+                });
+            });
+
+            // Modal functionality
+            const modals = document.querySelectorAll('.modal');
+            const closeModalButtons = document.querySelectorAll('.close-modal');
+            
+            // Show modal functions
+            function showModal(modalId) {
+                document.getElementById(modalId).classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            // Close modal functions
+            function closeAllModals() {
+                modals.forEach(modal => modal.classList.remove('active'));
+                document.body.style.overflow = 'auto';
+            }
+            
+            // Event listeners for closing modals
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+            
+            // Close modal when clicking outside
+            modals.forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeAllModals();
+                    }
+                });
+            });
+
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const toastMessage = document.querySelector('.toast-message');
+                const toastIcon = document.querySelector('.toast-content i');
+                
+                // Set message
+                toastMessage.textContent = message;
+                
+                // Set icon based on type
+                if (type === 'error') {
+                    toast.style.backgroundColor = 'var(--danger)';
+                    toastIcon.className = 'fas fa-exclamation-circle';
+                } else if (type === 'warning') {
+                    toast.style.backgroundColor = 'var(--warning)';
+                    toastIcon.className = 'fas fa-exclamation-triangle';
+                } else {
+                    toast.style.backgroundColor = 'var(--success)';
+                    toastIcon.className = 'fas fa-check-circle';
+                }
+                
+                // Show toast
+                toast.classList.add('active');
+                
+                // Auto hide after 3 seconds
+                setTimeout(() => {
+                    toast.classList.remove('active');
+                }, 3000);
+            }
+
+            // Data store - will be populated from backend APIs when available
+            const mockData = {
+                appointments: [],
+                patients: [],
+                treatmentHistory: []
+            };
+
+            // Helper: simple fetch wrapper
+            async function apiFetch(endpoint, method = 'GET', body = null) {
+                const opts = { method, headers: { 'Content-Type': 'application/json' } };
+                if (body) opts.body = JSON.stringify(body);
+                try {
+                    const resp = await fetch(endpoint, opts);
+                    const json = await resp.json();
+                    return { ok: resp.ok, status: resp.status, data: json };
+                } catch (err) {
+                    console.error('API fetch error', err);
+                    return { ok: false, status: 0, data: { success: false, error: 'Network error' } };
+                }
+            }
+
+            // Fetch lists from backend (fall back to empty arrays on error)
+            async function fetchPatientsFromServer() {
+                const res = await apiFetch('/api/healthcare/patients');
+                if (res.ok && res.data) {
+                    let rows = [];
+                    if (res.data.success && Array.isArray(res.data.data)) rows = res.data.data;
+                    else if (Array.isArray(res.data)) rows = res.data;
+
+                    mockData.patients = rows.map(r => ({
+                        id: r.id,
+                        name: r.name || '',
+                        age: r.age || r.age === 0 ? r.age : '',
+                        gender: r.gender || '',
+                        homelessId: r.homeless_id || r.homelessId || '',
+                        ngo: r.ngo_name || r.ngo || (r.ngo_id ? String(r.ngo_id) : 'Not assigned'),
+                        lastVisit: r.last_visit_date || r.last_visit || (r.updated_at ? r.updated_at.split('T')[0] : ''),
+                        contact: r.contact_number || r.contact || ''
+                    }));
+                } else {
+                    console.warn('Could not fetch patients, using local data');
+                }
+            }
+
+            async function fetchAppointmentsFromServer() {
+                const res = await apiFetch('/api/healthcare/appointments');
+                if (res.ok && res.data) {
+                    let rows = [];
+                    if (res.data.success && Array.isArray(res.data.data)) rows = res.data.data;
+                    else if (Array.isArray(res.data)) rows = res.data;
+
+                    mockData.appointments = rows.map(a => ({
+                        id: a.id,
+                        patient: a.patient && a.patient.name ? a.patient.name : (a.patient_name || 'Unknown'),
+                        patientId: a.patient_id || (a.patient && a.patient.id) || '',
+                        date: a.appointment_date || a.date || '',
+                        time: a.appointment_time || a.time || '',
+                        ngo_id: a.ngo_id || (a.ngo && a.ngo.id) || '',
+                        bookedBy: (a.ngo && (a.ngo.name || a.ngo.email)) || a.booking_notes || a.referred_by || 'N/A',
+                        status: a.status || 'scheduled',
+                        symptoms: a.symptoms || ''
+                    }));
+                } else {
+                    console.warn('Could not fetch appointments, using local data');
+                }
+            }
+
+
+            async function fetchTreatmentHistoryFromServer() {
+                const res = await apiFetch('/api/healthcare/treatment-history');
+                if (res.ok && res.data) {
+                    let rows = [];
+                    if (res.data.success && Array.isArray(res.data.data)) rows = res.data.data;
+                    else if (Array.isArray(res.data)) rows = res.data;
+
+                    mockData.treatmentHistory = rows.map(t => ({
+                        id: t.id,
+                        patient: t.patient && t.patient.name ? t.patient.name : 'Unknown',
+                        patientId: t.patient_id || (t.patient && t.patient.id) || '',
+                        date: t.created_at || new Date().toISOString(),
+                        details: `${t.diagnosis || 'No diagnosis'} - ${t.prescription || 'No prescription'}`,
+                        diagnosis: t.diagnosis || '',
+                        medication: t.prescription || '',
+                        doctor: t.healthcare_provider && t.healthcare_provider.name ? t.healthcare_provider.name : 'Unknown Provider',
+                        notes: t.notes || ''
+                    }));
+                } else {
+                    console.warn('Could not fetch treatment history, using local data');
+                }
+            }
+
+            async function loadInitialData() {
+                await Promise.all([
+                    fetchPatientsFromServer(),
+                    fetchAppointmentsFromServer(),
+                    fetchTreatmentHistoryFromServer()
+                ]);
+                loadDashboardData();
+                // If the current tab is appointments or patients, load them too
+                if (document.getElementById('appointments-tab').classList.contains('active')) loadAppointments();
+                if (document.getElementById('patients-tab').classList.contains('active')) loadPatients();
+                if (document.getElementById('history-tab').classList.contains('active')) loadTreatmentHistory();
+            }
+
+            // Dashboard functions
+            function loadDashboardData() {
+                // Update stats
+                const today = new Date().toISOString().split('T')[0];
+                const todayAppointments = mockData.appointments.filter(apt => apt.date === today).length;
+                document.getElementById('today-appointments').textContent = todayAppointments;
+                document.getElementById('total-patients').textContent = mockData.patients.length;
+                // Providers feature removed — show 0
+                document.getElementById('active-providers').textContent = 0;
+                document.getElementById('completed-treatments').textContent = 
+                    mockData.appointments.filter(apt => apt.status === 'completed').length;
+                
+                // Update pending count
+                document.getElementById('pending-count').textContent = 
+                    mockData.appointments.filter(apt => apt.status === 'scheduled').length;
+                
+                // Load upcoming appointments
+                const upcomingTable = document.querySelector('#upcoming-appointments tbody');
+                upcomingTable.innerHTML = '';
+                
+                const todayAppointmentsList = mockData.appointments
+                    .filter(apt => apt.date === today && apt.status === 'scheduled')
+                    .slice(0, 5);
+                
+                if (todayAppointmentsList.length === 0) {
+                    upcomingTable.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>No appointments scheduled for today</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    todayAppointmentsList.forEach(apt => {
+                        const row = document.createElement('tr');
+                        const time = new Date(`${apt.date}T${apt.time}`).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        
+                        row.innerHTML = `
+                            <td>${apt.patient}</td>
+                            <td>${time}</td>
+                            <td><span class="status-badge status-${apt.status}">${apt.status}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewAppointment('${apt.id}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn edit" onclick="editAppointment('${apt.id}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        upcomingTable.appendChild(row);
+                    });
+                }
+                
+                // Load recent prescriptions
+                loadRecentPrescriptions();
+                
+                // Initialize chart
+                initMonthlyChart();
+            }
+
+            // Load recent prescriptions in dashboard
+            function loadRecentPrescriptions() {
+                const tableBody = document.querySelector('#recent-prescriptions tbody');
+                if (!tableBody) return;
+                
+                tableBody.innerHTML = '';
+                
+                // Get recent treatment history (last 5)
+                const recentPrescriptions = mockData.treatmentHistory
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 5);
+                
+                if (recentPrescriptions.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <i class="fas fa-file-medical"></i>
+                                <p>No prescriptions found</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    recentPrescriptions.forEach(prescription => {
+                        const row = document.createElement('tr');
+                        const date = new Date(prescription.date).toLocaleDateString();
+                        const prescriptionText = prescription.medication || 'N/A';
+                        const shortPrescription = prescriptionText.length > 50 
+                            ? prescriptionText.substring(0, 50) + '...' 
+                            : prescriptionText;
+                        
+                        row.innerHTML = `
+                            <td>${prescription.patient}</td>
+                            <td>${date}</td>
+                            <td>${shortPrescription}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewTreatmentDetails('${prescription.id || prescription.patientId}')" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            }
+
+            function initMonthlyChart() {
+                const ctx = document.getElementById('monthlyChart').getContext('2d');
+                const monthSelect = document.getElementById('month-select');
+                
+                // Set current month
+                const currentMonth = new Date().getMonth() + 1;
+                monthSelect.value = currentMonth;
+                
+                // Sample data for chart
+                const chartData = {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Appointments',
+                        data: [12, 19, 8, 15],
+                        backgroundColor: 'rgba(26, 115, 232, 0.2)',
+                        borderColor: 'rgba(26, 115, 232, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }, {
+                        label: 'Treatments',
+                        data: [8, 15, 12, 10],
+                        backgroundColor: 'rgba(52, 168, 83, 0.2)',
+                        borderColor: 'rgba(52, 168, 83, 1)',
+                        borderWidth: 2,
+                        tension: 0.4
+                    }]
+                };
+                
+                const chart = new Chart(ctx, {
+                    type: 'line',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Monthly Healthcare Activity'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Cases'
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Update chart when month changes
+                monthSelect.addEventListener('change', function() {
+                    // In production, fetch new data based on selected month
+                    chart.update();
+                });
+            }
+
+            // Appointments functions
+            function loadAppointments(filterStatus = 'all', filterDate = '') {
+                const tableBody = document.querySelector('#appointments-table tbody');
+                tableBody.innerHTML = '';
+                
+                let filteredAppointments = [...mockData.appointments];
+                
+                // Apply filters
+                if (filterStatus !== 'all') {
+                    filteredAppointments = filteredAppointments.filter(apt => apt.status === filterStatus);
+                }
+                
+                if (filterDate) {
+                    filteredAppointments = filteredAppointments.filter(apt => apt.date === filterDate);
+                }
+                
+                // Sort by date (most recent first)
+                filteredAppointments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                if (filteredAppointments.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-calendar-times"></i>
+                                <p>No appointments found</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    filteredAppointments.forEach(apt => {
+                        const row = document.createElement('tr');
+                        const dateTime = new Date(`${apt.date}T${apt.time}`).toLocaleString([], {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute:'2-digit'
+                        });
+                        
+                        row.innerHTML = `
+                            <td>${apt.id}</td>
+                            <td>${apt.patient}</td>
+                            <td>${dateTime}</td>
+                            <td>${apt.bookedBy}</td>
+                            <td><span class="status-badge status-${apt.status}">${apt.status}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewAppointment('${apt.id}')" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="action-btn edit" onclick="editAppointment('${apt.id}')" title="Edit Appointment">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn delete" onclick="deleteAppointment('${apt.id}')" title="Delete Appointment">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button class="action-btn prescribe" data-appointment-id="${apt.id}" title="Prescribe Treatment">
+                                        <i class="fas fa-notes-medical"></i> Prescribe
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            }
+
+            // View appointment details
+            window.viewAppointment = function(id) {
+                const appointment = mockData.appointments.find(apt => apt.id === id);
+                if (appointment) {
+                    alert(`Appointment Details:\n\nPatient: ${appointment.patient}\nDate: ${appointment.date}\nTime: ${appointment.time}\nBooked By: ${appointment.bookedBy}\nStatus: ${appointment.status}\nSymptoms: ${appointment.symptoms || 'N/A'}\nDiagnosis: ${appointment.diagnosis || 'N/A'}\nPrescribed: ${appointment.prescribed || 'N/A'}`);
+                }
+            };
+
+            // Load NGOs for appointment form
+            async function loadNGOsForAppointmentForm() {
+                const ngoSelect = document.getElementById('appointment-ngo-select');
+                ngoSelect.innerHTML = '<option value="">Select NGO</option>';
+                
+                try {
+                    const res = await apiFetch('/api/healthcare/ngos');
+                    if (res.ok && res.data) {
+                        let ngos = [];
+                        if (res.data.success && Array.isArray(res.data.data)) {
+                            ngos = res.data.data;
+                        } else if (Array.isArray(res.data)) {
+                            ngos = res.data;
+                        }
+                        
+                        ngos.forEach(ngo => {
+                            const option = document.createElement('option');
+                            option.value = ngo.id;
+                            option.textContent = ngo.name || ngo.email || ngo.id;
+                            ngoSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading NGOs:', error);
+                }
+            }
+
+            // Edit appointment
+            window.editAppointment = async function(id) {
+                const appointment = mockData.appointments.find(apt => apt.id === id);
+                if (appointment) {
+                    // Populate modal with appointment data
+                    document.getElementById('appointment-id').value = appointment.id;
+                    document.getElementById('appointment-date').value = appointment.date;
+                    document.getElementById('appointment-time').value = appointment.time;
+                    document.getElementById('symptoms').value = appointment.symptoms || '';
+                    document.getElementById('booked-by').value = appointment.bookedBy || '';
+                    
+                    // Set patient select
+                    const patientSelect = document.getElementById('patient-select');
+                    patientSelect.innerHTML = '<option value="">Select Patient</option>';
+                    mockData.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.id;
+                        option.textContent = patient.name;
+                        if (patient.id === appointment.patientId) {
+                            option.selected = true;
+                        }
+                        patientSelect.appendChild(option);
+                    });
+                    
+                    // Load and set NGO
+                    await loadNGOsForAppointmentForm();
+                    if (appointment.ngo_id) {
+                        document.getElementById('appointment-ngo-select').value = appointment.ngo_id;
+                    }
+                    
+                    // Provider selection removed
+                    
+                    showModal('appointment-modal');
+                }
+            };
+
+            // Prescribe appointment - open prescription modal
+            window.prescribeAppointment = async function(id) {
+                console.log('prescribeAppointment called with id:', id);
+                if (!id) {
+                    console.error('Invalid appointment ID');
+                    showToast('Invalid appointment ID', 'error');
+                    return;
+                }
+                
+                try {
+                    // Check if modal elements exist
+                    const appointmentIdField = document.getElementById('prescription-appointment-id');
+                    const diagnosisField = document.getElementById('diagnosis');
+                    const prescriptionField = document.getElementById('prescription-text');
+                    const ngoSelect = document.getElementById('prescription-ngo');
+                    
+                    if (!appointmentIdField || !diagnosisField || !prescriptionField || !ngoSelect) {
+                        console.error('Prescription modal elements not found');
+                        showToast('Error: Prescription form not found. Please refresh the page.', 'error');
+                        return;
+                    }
+                    
+                    // set appointment id
+                    appointmentIdField.value = id;
+                    diagnosisField.value = '';
+                    prescriptionField.value = '';
+
+                    // populate NGO select
+                    ngoSelect.innerHTML = '<option value="">Select NGO (optional)</option>';
+                    
+                    const res = await apiFetch('/api/healthcare/ngos');
+                    if (res.ok && res.data) {
+                        let ngos = [];
+                        if (res.data.success && Array.isArray(res.data.data)) {
+                            ngos = res.data.data;
+                        } else if (Array.isArray(res.data)) {
+                            ngos = res.data;
+                        } else if (Array.isArray(res.data.data)) {
+                            ngos = res.data.data;
+                        }
+                        
+                        ngos.forEach(n => {
+                            const opt = document.createElement('option');
+                            opt.value = n.id;
+                            opt.textContent = n.name || n.email || n.id;
+                            ngoSelect.appendChild(opt);
+                        });
+                    }
+
+                    // Show the modal
+                    const modal = document.getElementById('prescription-modal');
+                    if (modal) {
+                        showModal('prescription-modal');
+                        console.log('Prescription modal opened successfully');
+                    } else {
+                        console.error('Prescription modal not found');
+                        showToast('Error: Prescription modal not found', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error opening prescription modal:', error);
+                    showToast('Error opening prescription form: ' + error.message, 'error');
+                }
+            };
+
+            // Delete appointment
+            window.deleteAppointment = function(id) {
+                if (!confirm('Are you sure you want to delete this appointment?')) return;
+                (async () => {
+                    const res = await apiFetch(`/api/healthcare/appointments/${id}`, 'DELETE');
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Appointment deleted successfully');
+                        await fetchAppointmentsFromServer();
+                        loadAppointments();
+                        loadDashboardData();
+                    } else {
+                        showToast('Failed to delete appointment', 'error');
+                        console.error('Delete appointment error', res);
+                    }
+                })();
+            };
+
+            // Event delegation for prescription buttons (handles dynamically created buttons)
+            document.addEventListener('click', function(e) {
+                const prescribeBtn = e.target.closest('.action-btn.prescribe');
+                if (prescribeBtn) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const appointmentId = prescribeBtn.getAttribute('data-appointment-id');
+                    console.log('Prescription button clicked, appointmentId:', appointmentId);
+                    if (appointmentId && typeof window.prescribeAppointment === 'function') {
+                        window.prescribeAppointment(appointmentId);
+                    } else {
+                        console.error('Prescription button error:', {
+                            appointmentId: appointmentId,
+                            prescribeAppointmentExists: typeof window.prescribeAppointment === 'function'
+                        });
+                        showToast('Error: Could not open prescription form. Please refresh the page.', 'error');
+                    }
+                }
+            });
+
+            // Prescription form submit
+            document.getElementById('prescription-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const appointmentId = document.getElementById('prescription-appointment-id').value;
+                const diagnosis = document.getElementById('diagnosis').value.trim();
+                const prescriptionText = document.getElementById('prescription-text').value.trim();
+                const ngoId = document.getElementById('prescription-ngo').value || null;
+
+                // Validate that prescription is provided (required)
+                if (!prescriptionText) {
+                    showToast('Please provide a prescription for the patient', 'error');
+                    return;
+                }
+
+                if (!appointmentId) {
+                    showToast('Invalid appointment. Please try again.', 'error');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Saving...';
+
+                try {
+                    const payload = { 
+                        diagnosis: diagnosis || null, 
+                        prescription: prescriptionText, 
+                        ngo_id: ngoId 
+                    };
+                    const res = await apiFetch(`/api/healthcare/appointments/${appointmentId}/prescription`, 'POST', payload);
+                    
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Prescription saved successfully and added to treatment history');
+                        // Refresh appointments to show updated status
+                        await fetchAppointmentsFromServer();
+                        // Refresh treatment history to show the new prescription
+                        await fetchTreatmentHistoryFromServer();
+                        loadAppointments();
+                        loadDashboardData(); // This will refresh recent prescriptions too
+                        loadTreatmentHistory();
+                        // attach printable data to print button
+                        // set print content for the printed prescription
+                        document.getElementById('print-prescription').dataset.printBody = `<h1>Prescription for Appointment ${appointmentId}</h1><p><strong>Diagnosis:</strong> ${diagnosis || 'N/A'}</p><p><strong>Prescription:</strong> ${prescriptionText}</p>`;
+                        closeAllModals();
+                    } else {
+                        const errorMsg = res.data?.error || res.data?.message || res.data?.details || 'Failed to save prescription';
+                        console.error('Prescription error - Full response:', res);
+                        console.error('Prescription error - Error details:', res.data);
+                        showToast(`Failed to save prescription: ${errorMsg}`, 'error');
+                        // Don't close modal on error so user can fix and retry
+                    }
+                } catch (error) {
+                    console.error('Error submitting prescription:', error);
+                    showToast('An error occurred while saving the prescription', 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            });
+
+            // Print button: fallback to print current visible prescription content
+            document.getElementById('print-prescription').addEventListener('click', function() {
+                const printBtn = this;
+                // If a print body was set after successful submit, use it
+                const body = printBtn.dataset.printBody || `<h1>Prescription</h1><p><strong>Diagnosis:</strong> ${document.getElementById('diagnosis').value}</p><p><strong>Prescription:</strong> ${document.getElementById('prescription-text').value}</p>`;
+                if (!body) {
+                    showToast('No prescription to print', 'warning');
+                    return;
+                }
+                const win = window.open('', '_blank');
+                win.document.write(body);
+                win.document.close();
+                win.focus();
+                win.print();
+                win.close();
+            });
+
+            // Patients functions
+            async function loadPatients() {
+                const tableBody = document.querySelector('#patients-table tbody');
+                tableBody.innerHTML = '';
+
+                // If we haven't loaded patients yet, fetch from server
+                if (!mockData.patients || mockData.patients.length === 0) {
+                    await fetchPatientsFromServer();
+                }
+
+                if (mockData.patients.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <i class="fas fa-user-times"></i>
+                                <p>No patients found</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                mockData.patients.forEach(patient => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${patient.id}</td>
+                        <td>${patient.name}</td>
+                        <td>${patient.age}</td>
+                        <td>${patient.gender}</td>
+                        <td>${patient.homelessId}</td>
+                        <td>${patient.ngo}</td>
+                        <td>${patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : ''}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view" onclick="viewPatient('${patient.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn edit" onclick="editPatient('${patient.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // View patient details
+            window.viewPatient = function(id) {
+                const patient = mockData.patients.find(p => p.id === id);
+                if (patient) {
+                    alert(`Patient Details:\n\nName: ${patient.name}\nAge: ${patient.age}\nGender: ${patient.gender}\nHomeless ID: ${patient.homelessId}\nNGO: ${patient.ngo}\nLast Visit: ${patient.lastVisit}\nContact: ${patient.contact || 'N/A'}`);
+                }
+            };
+
+            // Edit patient
+            window.editPatient = function(id) {
+                const patient = mockData.patients.find(p => p.id === id);
+                if (patient) {
+                    // Populate modal with patient data
+                    document.getElementById('patient-id').value = patient.id;
+                    document.getElementById('patient-name').value = patient.name;
+                    document.getElementById('patient-age').value = patient.age;
+                    document.getElementById('patient-gender').value = patient.gender;
+                    document.getElementById('homeless-id').value = patient.homelessId;
+                    document.getElementById('patient-contact').value = patient.contact || '';
+                    
+                    showModal('patient-modal');
+                }
+            };
+
+            // Treatment history functions
+            async function loadTreatmentHistory() {
+                // Refresh from server
+                await fetchTreatmentHistoryFromServer();
+                
+                const tableBody = document.querySelector('#history-table tbody');
+                tableBody.innerHTML = '';
+                
+                if (mockData.treatmentHistory.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-file-medical"></i>
+                                <p>No treatment history found</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    mockData.treatmentHistory.forEach(history => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${history.patient}</td>
+                            <td>${new Date(history.date).toLocaleDateString()}</td>
+                            <td>${history.diagnosis || 'N/A'}</td>
+                            <td>${history.medication || 'N/A'}</td>
+                            <td>${history.doctor}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn view" onclick="viewTreatmentDetails('${history.id || history.patientId}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+                
+                // Add search functionality
+                const searchInput = document.getElementById('history-search');
+                if (searchInput) {
+                    // Remove existing listeners to avoid duplicates
+                    const newSearchInput = searchInput.cloneNode(true);
+                    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+                    
+                    newSearchInput.addEventListener('input', function() {
+                        const searchTerm = this.value.toLowerCase();
+                        const rows = document.querySelectorAll('#history-table tbody tr');
+                        
+                        rows.forEach(row => {
+                            const text = row.textContent.toLowerCase();
+                            row.style.display = text.includes(searchTerm) ? '' : 'none';
+                        });
+                    });
+                }
+            }
+
+            // View treatment details
+            window.viewTreatmentDetails = function(treatmentId) {
+                const history = mockData.treatmentHistory.find(h => (h.id === treatmentId) || (h.patientId === treatmentId));
+                if (history) {
+                    alert(`Treatment Details:\n\nPatient: ${history.patient}\nDate: ${new Date(history.date).toLocaleString()}\nDoctor: ${history.doctor}\nDiagnosis: ${history.diagnosis || 'N/A'}\nPrescription: ${history.medication || 'N/A'}\nNotes: ${history.notes || 'N/A'}`);
+                } else {
+                    alert('Treatment details not found');
+                }
+            };
+
+            
+
+            // Reports functions
+            function loadReports() {
+                // Initialize appointment chart
+                const appointmentCtx = document.getElementById('appointmentChart').getContext('2d');
+                const appointmentChart = new Chart(appointmentCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Scheduled', 'Completed', 'Cancelled', 'No Show'],
+                        datasets: [{
+                            data: [25, 40, 10, 5],
+                            backgroundColor: [
+                                'rgba(26, 115, 232, 0.8)',
+                                'rgba(52, 168, 83, 0.8)',
+                                'rgba(234, 67, 53, 0.8)',
+                                'rgba(251, 188, 5, 0.8)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Appointment Status Distribution'
+                            }
+                        }
+                    }
+                });
+                
+                // Load common treatments
+                const commonTreatments = document.getElementById('common-treatments');
+                const treatments = [
+                    { name: 'Respiratory Infections', count: 42 },
+                    { name: 'Dental Issues', count: 35 },
+                    { name: 'Skin Infections', count: 28 },
+                    { name: 'Hypertension', count: 22 },
+                    { name: 'Diabetes', count: 18 },
+                    { name: 'Mental Health', count: 15 }
+                ];
+                
+                let treatmentsHtml = '';
+                treatments.forEach(treatment => {
+                    treatmentsHtml += `
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>${treatment.name}</span>
+                                <span>${treatment.count} cases</span>
+                            </div>
+                            <div style="width: 100%; background-color: #f0f0f0; border-radius: 4px;">
+                                <div style="width: ${(treatment.count / 50) * 100}%; background-color: var(--primary-blue); height: 8px; border-radius: 4px;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                commonTreatments.innerHTML = treatmentsHtml;
+                
+                // Generate report button
+                document.getElementById('generate-report').addEventListener('click', function() {
+                    const period = document.getElementById('report-period').value;
+                    showToast(`Generating ${period} healthcare report...`);
+                    
+                    // Simulate report generation
+                    setTimeout(() => {
+                        showToast(`${period.charAt(0).toUpperCase() + period.slice(1)} report generated successfully`);
+                    }, 1500);
+                });
+            }
+
+            // Form submissions
+            // Appointment form
+            document.getElementById('appointment-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const appointmentId = document.getElementById('appointment-id').value;
+                const patientSelect = document.getElementById('patient-select');
+                const ngoSelect = document.getElementById('appointment-ngo-select');
+                const date = document.getElementById('appointment-date').value;
+                const time = document.getElementById('appointment-time').value;
+                const symptoms = document.getElementById('symptoms').value;
+                const bookedBy = document.getElementById('booked-by').value;
+
+                const patientId = patientSelect.value;
+                const ngoId = ngoSelect.value;
+
+                // Build payload expected by backend
+                const payload = {
+                    patient_id: patientId,
+                    appointment_date: date,
+                    appointment_time: time,
+                    symptoms: symptoms,
+                    booking_notes: bookedBy
+                };
+
+                // Add ngo_id if selected
+                if (ngoId) {
+                    payload.ngo_id = ngoId;
+                }
+
+                // Validate required fields
+                if (!patientId) {
+                    showToast('Please select a patient', 'error');
+                    return;
+                }
+                if (!date) {
+                    showToast('Please select a date', 'error');
+                    return;
+                }
+                if (!time) {
+                    showToast('Please select a time', 'error');
+                    return;
+                }
+
+                if (appointmentId) {
+                    // Update existing appointment via API
+                    const res = await apiFetch(`/api/healthcare/appointments/${appointmentId}`, 'PUT', payload);
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Appointment updated successfully');
+                        // Refresh lists from server
+                        await fetchAppointmentsFromServer();
+                        await fetchPatientsFromServer();
+                        closeAllModals();
+                        loadAppointments();
+                        loadDashboardData();
+                    } else {
+                        const errorMsg = res.data?.error || res.data?.message || 'Failed to update appointment';
+                        showToast(`Failed to update appointment: ${errorMsg}`, 'error');
+                        console.error('Update appointment error', res);
+                    }
+                } else {
+                    // Create new appointment via API
+                    const res = await apiFetch('/api/healthcare/appointments', 'POST', payload);
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Appointment created successfully');
+                        // Refresh lists from server to show the new appointment
+                        await fetchAppointmentsFromServer();
+                        await fetchPatientsFromServer();
+                        closeAllModals();
+                        loadAppointments();
+                        loadDashboardData();
+                    } else {
+                        const errorMsg = res.data?.error || res.data?.message || 'Failed to create appointment';
+                        showToast(`Failed to create appointment: ${errorMsg}`, 'error');
+                        console.error('Create appointment error', res);
+                        // Don't close modal on error so user can fix and retry
+                    }
+                }
+            });
+
+            // Patient form
+            document.getElementById('patient-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const patientId = document.getElementById('patient-id').value;
+                const name = document.getElementById('patient-name').value;
+                const age = document.getElementById('patient-age').value;
+                const gender = document.getElementById('patient-gender').value;
+                const homelessId = document.getElementById('homeless-id').value;
+                const contact = document.getElementById('patient-contact').value;
+                const notes = document.getElementById('patient-notes').value;
+
+                const payload = {
+                    name: name,
+                    age: age || null,
+                    gender: gender || null,
+                    homeless_id: homelessId,
+                    contact_number: contact || null,
+                    // additional fields could be added like notes
+                };
+
+                if (patientId) {
+                    const res = await apiFetch(`/api/healthcare/patients/${patientId}`, 'PUT', payload);
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Patient information updated successfully');
+                    } else {
+                        showToast('Failed to update patient', 'error');
+                        console.error('Update patient error', res);
+                    }
+                } else {
+                    const res = await apiFetch('/api/healthcare/patients', 'POST', payload);
+                    if (res.ok && res.data && res.data.success) {
+                        showToast('Patient added successfully');
+                    } else {
+                        showToast('Failed to create patient', 'error');
+                        console.error('Create patient error', res);
+                    }
+                }
+
+                // Refresh patients from server
+                await fetchPatientsFromServer();
+                closeAllModals();
+                loadPatients();
+                loadDashboardData();
+            });
+
+            // Event listeners for buttons
+            // Add appointment button
+            document.getElementById('add-appointment-btn').addEventListener('click', async function() {
+                // Reset form
+                document.getElementById('appointment-form').reset();
+                document.getElementById('appointment-id').value = '';
+                
+                // Populate patient select
+                const patientSelect = document.getElementById('patient-select');
+                patientSelect.innerHTML = '<option value="">Select Patient</option>';
+                mockData.patients.forEach(patient => {
+                    const option = document.createElement('option');
+                    option.value = patient.id;
+                    option.textContent = patient.name;
+                    patientSelect.appendChild(option);
+                });
+                
+                // Load NGOs
+                await loadNGOsForAppointmentForm();
+                
+                // Provider selection removed
+                
+                // Set default date to today
+                document.getElementById('appointment-date').value = new Date().toISOString().split('T')[0];
+                
+                showModal('appointment-modal');
+            });
+
+            // Load sample data button (calls backend to insert sample NGOs/patients/appointments)
+            document.getElementById('load-sample-data').addEventListener('click', async function() {
+                if (!confirm('This will insert sample NGOs, patients and appointments into the database for testing. Continue?')) return;
+                showToast('Creating sample data...');
+                const res = await apiFetch('/api/healthcare/sample-data', 'POST');
+                if (res.ok && res.data && res.data.success) {
+                    showToast('Sample data created');
+                    await fetchPatientsFromServer();
+                    await fetchAppointmentsFromServer();
+                    loadAppointments();
+                    loadDashboardData();
+                } else {
+                    showToast('Failed to create sample data', 'error');
+                    console.error('Sample data error', res);
+                }
+            });
+
+            // Add patient button
+            document.getElementById('add-patient-btn').addEventListener('click', function() {
+                // Reset form
+                document.getElementById('patient-form').reset();
+                document.getElementById('patient-id').value = '';
+                
+                // Set default homeless ID
+                const newHomelessId = 'HM' + String(mockData.patients.length + 1).padStart(3, '0');
+                document.getElementById('homeless-id').value = newHomelessId;
+                
+                showModal('patient-modal');
+            });
+
+            
+
+            // Filter appointments
+            document.getElementById('filter-status').addEventListener('change', function() {
+                const status = this.value;
+                const date = document.getElementById('filter-date').value;
+                loadAppointments(status, date);
+            });
+
+            document.getElementById('filter-date').addEventListener('change', function() {
+                const status = document.getElementById('filter-status').value;
+                const date = this.value;
+                loadAppointments(status, date);
+            });
+
+            document.getElementById('clear-filters').addEventListener('click', function() {
+                document.getElementById('filter-status').value = 'all';
+                document.getElementById('filter-date').value = '';
+                loadAppointments();
+            });
+
+            // View all button for upcoming appointments
+            document.querySelector('.btn-view-all').addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                document.querySelector(`[data-tab="${tabId}"]`).click();
+            });
+
+            // Initialize dashboard data
+            loadDashboardData();
+        });
+    </script>
+</body>
+</html>

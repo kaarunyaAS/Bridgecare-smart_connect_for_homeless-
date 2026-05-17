@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Profile</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #e1e8ed;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .profile-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        .sidebar {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: var(--light);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: var(--primary);
+            border: 5px solid var(--light);
+        }
+
+        .profile-name {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .profile-id {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .profile-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .status-active {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--secondary);
+        }
+
+        .status-inactive {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger);
+        }
+
+        .profile-details {
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-item i {
+            width: 20px;
+            color: var(--primary);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .icon-primary {
+            background-color: var(--primary);
+        }
+
+        .icon-secondary {
+            background-color: var(--secondary);
+        }
+
+        .icon-warning {
+            background-color: var(--warning);
+        }
+
+        .icon-danger {
+            background-color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            background-color: var(--light);
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge i {
+            color: var(--warning);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .table th {
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e1e8ed;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: var(--secondary);
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 14px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        @media (max-width: 992px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">VolunteerHub</div>
+            <div class="user-info">
+                <div class="avatar">JD</div>
+                <div>
+                    <div>John Doe</div>
+                    <div style="font-size: 14px; color: var(--gray);">Administrator</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="profile-container">
+            <div class="sidebar">
+                <div class="profile-image">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h2 class="profile-name">Sarah Johnson</h2>
+                <div class="profile-id">ID: VOL-4821</div>
+                <div class="profile-status status-active">Active</div>
+                
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Assigned Region: Metro Central</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Joined: March 15, 2023</span>
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Last Updated: Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Tasks Completed</div>
+                        <div class="card-icon icon-primary">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">127</div>
+                    <div class="stat-label">Total tasks completed</div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 85%"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Ongoing Tasks</div>
+                        <div class="card-icon icon-warning">
+                            <i class="fas fa-spinner"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">8</div>
+                    <div class="stat-label">Currently assigned tasks</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">People Helped</div>
+                        <div class="card-icon icon-secondary">
+                            <i class="fas fa-hands-helping"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">342</div>
+                    <div class="stat-label">Individuals assisted</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Emergency Cases</div>
+                        <div class="card-icon icon-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">14</div>
+                    <div class="stat-label">Emergency responses</div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div class="card-title">Food Delivered</div>
+                        <div class="card-icon icon-secondary">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">1,248</div>
+                    <div class="stat-label">Meals delivered to those in need</div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 72%"></div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div class="card-title">Badges & Achievements</div>
+                        <div class="card-icon icon-warning">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                    </div>
+                    <div class="badges-container">
+                        <div class="badge">
+                            <i class="fas fa-star"></i>
+                            First Responder
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-star"></i>
+                            Food Hero
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-star"></i>
+                            Community Champion
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-star"></i>
+                            100 Tasks
+                        </div>
+                        <div class="badge">
+                            <i class="fas fa-star"></i>
+                            Emergency Expert
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div class="card-title">Activity Timeline</div>
+                        <div class="card-icon icon-primary">
+                            <i class="fas fa-history"></i>
+                        </div>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Activity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Today, 10:30 AM</td>
+                                <td>Food delivery to Central District</td>
+                                <td>Completed</td>
+                            </tr>
+                            <tr>
+                                <td>Yesterday, 2:15 PM</td>
+                                <td>Emergency response - Flood relief</td>
+                                <td>Completed</td>
+                            </tr>
+                            <tr>
+                                <td>Oct 12, 9:45 AM</td>
+                                <td>Community outreach program</td>
+                                <td>Completed</td>
+                            </tr>
+                            <tr>
+                                <td>Oct 10, 1:20 PM</td>
+                                <td>Food delivery to Westside</td>
+                                <td>Completed</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>VolunteerHub &copy; 2023 | Empowering Communities Through Service</p>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for the volunteer profile
+        const volunteerData = {
+            user_id: "550e8400-e29b-41d4-a716-446655440000",
+            volunteer_id: "VOL-4821",
+            assigned_region: "Metro Central",
+            status: "Active",
+            total_tasks_completed: 127,
+            ongoing_tasks: 8,
+            people_helped: 342,
+            food_delivered: 1248,
+            emergency_cases: 14,
+            badges: [
+                "First Responder",
+                "Food Hero",
+                "Community Champion",
+                "100 Tasks",
+                "Emergency Expert"
+            ],
+            created_at: "2023-03-15T10:30:00Z",
+            updated_at: new Date().toISOString()
+        };
+
+        // Function to update the UI with volunteer data
+        function updateVolunteerProfile(data) {
+            document.querySelector('.profile-name').textContent = "Sarah Johnson";
+            document.querySelector('.profile-id').textContent = `ID: ${data.volunteer_id}`;
+            
+            const statusElement = document.querySelector('.profile-status');
+            statusElement.textContent = data.status;
+            statusElement.className = `profile-status status-${data.status.toLowerCase()}`;
+            
+            document.querySelector('.detail-item:nth-child(1) span').textContent = `Assigned Region: ${data.assigned_region}`;
+            
+            const joinDate = new Date(data.created_at);
+            document.querySelector('.detail-item:nth-child(2) span').textContent = `Joined: ${joinDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+            
+            const updateDate = new Date(data.updated_at);
+            document.querySelector('.detail-item:nth-child(3) span').textContent = `Last Updated: ${updateDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+            
+            document.querySelector('.card:nth-child(1) .stat-value').textContent = data.total_tasks_completed;
+            document.querySelector('.card:nth-child(2) .stat-value').textContent = data.ongoing_tasks;
+            document.querySelector('.card:nth-child(3) .stat-value').textContent = data.people_helped;
+            document.querySelector('.card:nth-child(4) .stat-value').textContent = data.emergency_cases;
+            document.querySelector('.card:nth-child(5) .stat-value').textContent = data.food_delivered.toLocaleString();
+            
+            // Update badges
+            const badgesContainer = document.querySelector('.badges-container');
+            badgesContainer.innerHTML = '';
+            data.badges.forEach(badge => {
+                const badgeElement = document.createElement('div');
+                badgeElement.className = 'badge';
+                badgeElement.innerHTML = `<i class="fas fa-star"></i>${badge}`;
+                badgesContainer.appendChild(badgeElement);
+            });
+        }
+
+        // Initialize the profile with sample data
+        document.addEventListener('DOMContentLoaded', function() {
+            updateVolunteerProfile(volunteerData);
+            
+            // Add animation to stat cards
+            const statCards = document.querySelectorAll('.card');
+            statCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
